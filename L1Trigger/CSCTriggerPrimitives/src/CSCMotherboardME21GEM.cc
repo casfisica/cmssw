@@ -108,6 +108,7 @@ CSCMotherboardME21GEM::CSCMotherboardME21GEM(unsigned endcap, unsigned station,
 
   /// min eta of LCT for which we require GEM match (we don't throw out LCTs below this min eta)
   gem_match_min_eta = me21tmbParams.getParameter<double>("gemMatchMinEta");
+  gem_match_max_eta = me21tmbParams.getParameter<double>("gemMatchMaxEta");
 
   /// whether to throw out GEM-fiducial LCTs that have no gem match
   gem_clear_nomatch_lcts = me21tmbParams.getParameter<bool>("gemClearNomatchLCTs");
@@ -123,7 +124,9 @@ CSCMotherboardME21GEM::CSCMotherboardME21GEM(unsigned endcap, unsigned station,
 
   //  deltas used to match to GEM pads
   maxDeltaBXPad_ = me21tmbParams.getParameter<int>("maxDeltaBXPad");
-  maxDeltaPadPad_ = me21tmbParams.getParameter<int>("maxDeltaPadPad");
+  maxDeltaPadPadOdd_ = me21tmbParams.getParameter<int>("maxDeltaPadPadOdd");
+  maxDeltaPadPadEven_ = me21tmbParams.getParameter<int>("maxDeltaPadPadEven");
+  maxDeltaWg_ = me21tmbParams.getParameter<int>("maxDeltaWg");
 
   //  deltas used to match to GEM coincidence pads
   maxDeltaBXCoPad_ = me21tmbParams.getParameter<int>("maxDeltaBXCoPad");
@@ -294,6 +297,8 @@ CSCMotherboardME21GEM::run(const CSCWireDigiCollection* wiredc,
       }
     }
     
+    //select correct scenario, even or odd
+    maxDeltaPadPad_ = (isEven ? maxDeltaPadPadEven_ : maxDeltaPadPadOdd_);
     // build coincidence pads
     std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
     buildCoincidencePads(gemPads, *pCoPads);
@@ -1019,7 +1024,7 @@ CSCMotherboardME21GEM::createGEMRollEtaLUT(bool isLong)
     const LocalPoint lp_bottom(0., -half_striplength, 0.);
     const GlobalPoint gp_top(roll->toGlobal(lp_top));
     const GlobalPoint gp_bottom(roll->toGlobal(lp_bottom));
-    result[i] = std::make_pair(gp_top.eta(), gp_bottom.eta());
+    result[i] = std::make_pair(floorf(gp_top.eta() * 100) / 100, ceilf(gp_bottom.eta() * 100) / 100);
   }
   return result;
 }
@@ -1112,10 +1117,19 @@ CSCMotherboardME21GEM::GEMPadsBX
 CSCMotherboardME21GEM::matchingGEMPads(const CSCALCTDigi& alct, const GEMPadsBX& pads, bool isCoPad, bool first)
 {
   CSCMotherboardME21GEM::GEMPadsBX result;
-  
-  auto alctRoll(cscWgToGemRollLong_[alct.getKeyWG()]);
+  int Wg = alct.getKeyWG();
+  std::vector<int> Rolls;
+  Rolls.push_back(cscWgToGemRollLong_[Wg]);
+  if (Wg>=maxDeltaWg_ && cscWgToGemRollLong_[Wg] != cscWgToGemRollLong_[Wg-maxDeltaWg_]) 
+      Rolls.push_back(cscWgToGemRollLong_[Wg-maxDeltaWg_]); 
+  if ((unsigned int)(Wg+maxDeltaWg_)<cscWgToGemRollLong_.size() && cscWgToGemRollLong_[Wg] != cscWgToGemRollLong_[Wg+maxDeltaWg_])
+      Rolls.push_back(cscWgToGemRollLong_[Wg+maxDeltaWg_]);
+
   const bool debug(false);
-  if (debug) std::cout << "ALCT keyWG " << alct.getKeyWG() << ", roll " << alctRoll << std::endl;
+  if (debug) std::cout << "ALCT keyWG " << alct.getKeyWG() << std::endl;
+  for (auto alctRoll : Rolls)
+  {
+  if (debug) std::cout <<"roll " << alctRoll << std::endl;
   for (auto p: pads){
     auto padRoll(GEMDetId(p.first).roll());
     if (debug) std::cout << "Candidate ALCT: " << padRoll << std::endl;
@@ -1123,6 +1137,7 @@ CSCMotherboardME21GEM::matchingGEMPads(const CSCALCTDigi& alct, const GEMPadsBX&
     if (debug) std::cout << "++Matches! " << std::endl;
     result.push_back(p);
     if (first) return result;
+  }
   }
   return result;
 }
