@@ -24,12 +24,14 @@ public:
 
   int pad() const { return pad_; }
   int bx() const { return bx_; }
+  int roll() const { return roll_; }
 
   void print() const;
 
 private:
   uint16_t pad_;
-  int32_t  bx_; 
+  int32_t  bx_;
+  uint8_t  roll_;
 };
 
 std::ostream & operator<<(std::ostream & o, const GEMCSCPadDigi& digi);
