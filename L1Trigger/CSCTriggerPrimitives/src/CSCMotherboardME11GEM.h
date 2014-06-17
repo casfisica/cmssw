@@ -27,6 +27,10 @@ class CSCMotherboardME11GEM : public CSCMotherboard
   typedef std::vector<GEMPadBX> GEMPadsBX;
   typedef std::map<int, GEMPadsBX> GEMPads;
 
+  typedef std::pair<unsigned int, const GEMCSCCoPadDigi*> GEMCoPadBX;
+  typedef std::vector<GEMCoPadBX> GEMCoPadsBX;
+  typedef std::map<int, GEMCoPadsBX> GEMCoPads;
+
  public:
   /** Normal constructor. */
   CSCMotherboardME11GEM(unsigned endcap, unsigned station, unsigned sector, 
@@ -137,6 +141,7 @@ class CSCMotherboardME11GEM : public CSCMotherboard
 			    GEMCSCPadDigiCollection& out_co_pads);
 
   void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
+  void retrieveGEMCoPads(std::vector<GEMCSCCoPadDigi> pads,unsigned id);
 
   void createGEMRollEtaLUT(bool isEven);
 
@@ -288,5 +293,6 @@ class CSCMotherboardME11GEM : public CSCMotherboard
   // map< bx , vector<gemid, pad> >
   GEMPads pads_;
   GEMPads coPads_;
+  GEMCoPads copads_;
 };
 #endif
