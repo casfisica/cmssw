@@ -6,6 +6,8 @@
 #include <Geometry/GEMGeometry/interface/GEMEtaPartitionSpecs.h>
 #include <DataFormats/Math/interface/deltaPhi.h>
 #include <iomanip> 
+#include <tuple>
+#include <set>
 #include "boost/container/flat_set.hpp"
 
 const double CSCMotherboardME21GEM::lut_wg_eta_odd[112][2] = {
@@ -972,6 +974,8 @@ void CSCMotherboardME21GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* 
   for (auto det_range = out_pads->begin(); det_range != out_pads->end(); ++det_range) {
     const GEMDetId& id = (*det_range).first;
 
+    int roll(id.roll());
+
     // build coincidences only in station 2
     if (id.station() != 2 and id.station() != 3) continue;
     
@@ -998,10 +1002,24 @@ void CSCMotherboardME21GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* 
         gemCoPadV.push_back(GEMCSCCoPadDigi(*p,*co_p));
 
         // always use layer1 pad's BX as a copad's BX
-        GEMCSCPadDigi co_pad_digi(p->pad(), p->bx());
+        GEMCSCPadDigi co_pad_digi(p->pad(), p->bx(), roll);
         out_co_pads.insertDigi(id, co_pad_digi);
       }
     }
+  }
+
+  // removal of duplicates in copads
+  std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
+  const bool removeDuplicates(true);
+  if (removeDuplicates){
+    for (auto det_range = out_co_pads.begin(); det_range != out_co_pads.end(); ++det_range) {
+      const GEMDetId& id = (*det_range).first;
+      auto co_pads_range = out_co_pads.get(id);
+      std::set<GEMCSCPadDigi> clean_co_pads(co_pads_range.first,co_pads_range.second);
+      for (auto& p : clean_co_pads)
+        (*pCoPads).insertDigi(id, p);
+    }
+    out_co_pads = *pCoPads;
   }
 }
 

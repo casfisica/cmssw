@@ -525,6 +525,7 @@ void CSCMotherboardME11GEM::run(const CSCWireDigiCollection* wiredc,
     coPads_.clear();
     retrieveGEMPads(gemPads, gem_id);
     retrieveGEMPads(pCoPads.get(), gem_id, true);
+    retrieveGEMCoPads(gemCoPadV, gem_id);
     
     const bool debugStubs(false);
     if (debugStubs){
@@ -1819,6 +1820,8 @@ void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* 
   for (auto det_range = out_pads->begin(); det_range != out_pads->end(); ++det_range) {
     const GEMDetId& id = (*det_range).first;
     
+    int roll(id.roll());
+
     // all coincidences detIDs will have layer=1
     if (id.layer() != 1) continue;
     
@@ -1842,7 +1845,7 @@ void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* 
         gemCoPadV.push_back(GEMCSCCoPadDigi(*p,*co_p));
         
         // always use layer1 pad's BX as a copad's BX
-        GEMCSCPadDigi co_pad_digi(p->pad(), p->bx());
+        GEMCSCPadDigi co_pad_digi(p->pad(), p->bx(), roll);
         out_co_pads.insertDigi(id, co_pad_digi);
       }
     }
@@ -2211,6 +2214,36 @@ void CSCMotherboardME11GEM::retrieveGEMPads(const GEMCSCPadDigiCollection* gemPa
   }
 }
 
+void CSCMotherboardME11GEM::retrieveGEMCoPads(std::vector<GEMCSCCoPadDigi> pads, unsigned id)
+{
+  /*
+    cehck 
+  */
+  for (auto p: pads){
+    std::cout << p << std::endl;
+  }
+  /*
+  auto superChamber(gem_g->superChamber(id));
+  for (auto ch : superChamber->chambers()) {
+    for (auto roll : ch->etaPartitions()) {
+      GEMDetId roll_id(roll->id());
+      auto pads_in_det = gemPads->get(roll_id);
+      for (auto pad = pads_in_det.first; pad != pads_in_det.second; ++pad) {
+        auto id_pad = std::make_pair(roll_id(), &(*pad));
+        const int bx_shifted(lct_central_bx + pad->bx());
+        for (int bx = bx_shifted - maxDeltaBXPad_;bx <= bx_shifted + maxDeltaBXPad_; ++bx) {
+          if (iscopad){
+            if(bx != lct_central_bx) continue;
+            coPads_[bx].push_back(id_pad);  
+          }else{
+            pads_[bx].push_back(id_pad);  
+          }
+        }
+      }
+    }
+  }
+  */
+}
 
 bool CSCMotherboardME11GEM::isPadInOverlap(int roll)
 {
