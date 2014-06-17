@@ -8,8 +8,8 @@
 <class name="MuonDigiCollection<GEMDetId,GEMDigi>"/> 
 <class name="edm::Wrapper<MuonDigiCollection<GEMDetId,GEMDigi> >" splitLevel="0"/> 
 
-<class name="GEMCSCPadDigi" ClassVersion="10">
- <version ClassVersion="10" checksum="1196724793"/>
+<class name="GEMCSCPadDigi" ClassVersion="11">
+ <version ClassVersion="11" checksum="2483039904"/>
 </class>
 <class name="std::vector<GEMCSCPadDigi>"/>
 <class name="std::map<GEMDetId,std::vector<GEMCSCPadDigi> >"/>

@@ -15,7 +15,7 @@
 class GEMCSCPadDigi{
 
 public:
-  explicit GEMCSCPadDigi (int pad, int bx);
+  explicit GEMCSCPadDigi (int pad, int bx, int roll);
   GEMCSCPadDigi ();
 
   bool operator==(const GEMCSCPadDigi& digi) const;
