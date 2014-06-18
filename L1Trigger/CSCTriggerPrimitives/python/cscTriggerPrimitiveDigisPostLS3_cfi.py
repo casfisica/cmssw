@@ -360,6 +360,7 @@ cscTriggerPrimitiveDigisPostLS3 = cms.EDProducer("CSCTriggerPrimitivesProducer",
         ## copad construction
         maxDeltaBXInCoPad = cms.int32(1),
         maxDeltaPadInCoPad = cms.int32(1),
+        maxDeltaRollInCoPad = cms.int32(0),
 
         ## matching to pads in case LowQ CLCT
         maxDeltaBXPadEven = cms.int32(1),
@@ -434,6 +435,7 @@ cscTriggerPrimitiveDigisPostLS3 = cms.EDProducer("CSCTriggerPrimitivesProducer",
         ## copad construction
         maxDeltaBXInCoPad = cms.int32(1),
         maxDeltaPadInCoPad = cms.int32(1),
+        maxDeltaRollInCoPad = cms.int32(0),
 
         ## matching to pads in case LowQ CLCT
         maxDeltaBXPad = cms.int32(1),
