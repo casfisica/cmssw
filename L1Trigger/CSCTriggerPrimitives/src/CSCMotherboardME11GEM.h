@@ -168,7 +168,7 @@ class CSCMotherboardME11GEM : public CSCMotherboard
   unsigned int findQualityGEM(const CSCALCTDigi& aLCT, const CSCCLCTDigi& cLCT, 
 			      bool hasPad, bool hasCoPad);
   
-  void printGEMTriggerPads(int minBX, int maxBx);
+  void printGEMTriggerPads(int minBX, int maxBx, bool isCoPad = false);
   
   bool isPadInOverlap(int roll);
   

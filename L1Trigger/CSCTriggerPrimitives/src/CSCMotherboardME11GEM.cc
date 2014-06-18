@@ -578,7 +578,7 @@ void CSCMotherboardME11GEM::run(const CSCWireDigiCollection* wiredc,
         alct->secondALCT[bx_alct].print();
         
         printGEMTriggerPads(bx_clct_start, bx_clct_stop);      
-        //        printGEMTriggerPads(bx_clct_start, bx_clct_stop);      
+        printGEMTriggerPads(bx_clct_start, bx_clct_stop, true);      
         
         std::cout << "------------------------------------------------------------------------" << std::endl;
         std::cout << "Attempt ALCT-CLCT matching in ME1/b in bx range: [" << bx_clct_start << "," << bx_clct_stop << "]" << std::endl;
@@ -2106,62 +2106,48 @@ unsigned int CSCMotherboardME11GEM::findQualityGEM(const CSCCLCTDigi& cLCT, cons
 }
 
  
-void CSCMotherboardME11GEM::printGEMTriggerPads(int bx_start, int bx_stop)
+void CSCMotherboardME11GEM::printGEMTriggerPads(int bx_start, int bx_stop, bool isCoPad)
 {
-  std::cout << "------------------------------------------------------------------------" << std::endl;
-  bool first = true;
-  for (int bx = bx_start; bx <= bx_stop; bx++) {
-    // print only the pads for the central BX
-    std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > in_pads = pads_[bx];
-    if (first) {
-      std::cout << "* GEM trigger pads: " << std::endl;
+  if (!isCoPad){
+    std::cout << "------------------------------------------------------------------------" << std::endl;
+    bool first = true;
+    for (int bx = bx_start; bx <= bx_stop; bx++) {
+      // print only the pads for the central BX
+      std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > in_pads = pads_[bx];
+      if (first) {
+        std::cout << "* GEM trigger pads: " << std::endl;
+      }
+      first = false;
+      std::cout << "N(pads) BX " << bx << " : " << in_pads.size() << std::endl;
+      if (in_pads.size()){
+        for (auto pad : in_pads){
+          auto roll_id(GEMDetId(pad.first));
+          std::cout << "\tdetId " << pad.first << " " << roll_id << ", pad = " << pad.second->pad() << ", BX = " << pad.second->bx() + 6;
+          if (isPadInOverlap(roll_id.roll())) std::cout << " (in overlap)" << std::endl;
+          else std::cout << std::endl;
+        }
+      }
+      else
+        break;
     }
-    first = false;
-    std::cout << "N(pads) BX " << bx << " : " << in_pads.size() << std::endl;
-    if (in_pads.size()){
-      for (auto pad : in_pads){
-        auto roll_id(GEMDetId(pad.first));
-        std::cout << "\tdetId " << pad.first << " " << roll_id << ", pad = " << pad.second->pad() << ", BX = " << pad.second->bx() + 6;
-        if (isPadInOverlap(roll_id.roll())) std::cout << " (in overlap)" << std::endl;
-        else std::cout << std::endl;
+  }
+  else{
+    std::cout << "------------------------------------------------------------------------" << std::endl;
+    for (auto p: coPads_) {
+      std::cout << "bx_start " << bx_start << " bx_stop " << bx_stop << " bx1 " << p.first << std::endl;
+      if (bx_start <= p.first and p.first <= bx_stop){
+        // check if the second pad is in the range
+        for (auto q: p.second){
+          int bx(((q.second)->second()).bx());
+          if (bx_start <= bx and bx <= bx_stop){
+            std::cout << "valid copad bx1 " << p.first << " bx2 " << bx << std::endl;
+          }
+        }
       }
     }
-    else
-      break;
   }
 }
 
-// void CSCMotherboardME11GEM::printGEMTriggerPads(int bx_start, int bx_stop)
-// {
-//   // pads or copads?
-//   auto thePads(!iscopad ? pads_ : coPads_); 
-//   const bool hasPads(thePads.size()!=0);
-  
-//   std::cout << "------------------------------------------------------------------------" << std::endl;
-//   bool first = true;
-//   for (int bx = bx_start; bx <= bx_stop; bx++) {
-//     // print only the pads for the central BX
-//     if (bx!=lct_central_bx and iscopad) continue;
-//     std::vector<std::pair<unsigned int, const GEMCSCPadDigi*> > in_pads = thePads[bx];
-//     if (first) {
-//       if (!iscopad) std::cout << "* GEM trigger pads: " << std::endl;
-//       else          std::cout << "* GEM trigger coincidence pads: " << std::endl;
-//     }
-//     first = false;
-//     if (!iscopad) std::cout << "N(pads) BX " << bx << " : " << in_pads.size() << std::endl;
-//     else          std::cout << "N(copads) BX " << bx << " : " << in_pads.size() << std::endl;
-//     if (hasPads){
-//       for (auto pad : in_pads){
-//         auto roll_id(GEMDetId(pad.first));
-//         std::cout << "\tdetId " << pad.first << " " << roll_id << ", pad = " << pad.second->pad() << ", BX = " << pad.second->bx() + 6;
-//         if (isPadInOverlap(roll_id.roll())) std::cout << " (in overlap)" << std::endl;
-//         else std::cout << std::endl;
-//       }
-//     }
-//     else
-//       break;
-//   }
-// }
 
 void CSCMotherboardME11GEM::retrieveGEMPads(const GEMCSCPadDigiCollection* gemPads, unsigned id)
 {
