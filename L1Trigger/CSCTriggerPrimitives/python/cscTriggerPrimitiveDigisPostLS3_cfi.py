@@ -425,7 +425,7 @@ cscTriggerPrimitiveDigisPostLS3 = cms.EDProducer("CSCTriggerPrimitivesProducer",
 
         ## run in debug mode
         debugLUTs = cms.bool(False),
-        debugMatching = cms.bool(False),
+        debugMatching = cms.bool(True),
         debugGEMDphi = cms.bool(False),
 
         ## use old dataformat
