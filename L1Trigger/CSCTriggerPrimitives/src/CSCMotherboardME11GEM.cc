@@ -518,13 +518,14 @@ void CSCMotherboardME11GEM::run(const CSCWireDigiCollection* wiredc,
     }
 
     // build coincidence pads
-    buildCoincidencePads(gemPads, me1bId);
+    std::auto_ptr<GEMCSCCoPadDigiCollection> pCoPads(new GEMCSCCoPadDigiCollection());
+    buildCoincidencePads(gemPads, *pCoPads, me1bId);
     
     // retrieve pads and copads in a certain BX window for this CSC 
     pads_.clear();
     coPads_.clear();
     retrieveGEMPads(gemPads, gem_id);
-    retrieveGEMCoPads(gemCoPadV, gem_id);
+    retrieveGEMCoPads(pCoPads.release(), gem_id);
     
     const bool debugStubs(false);
     if (debugStubs){
@@ -1774,7 +1775,7 @@ void CSCMotherboardME11GEM::matchGEMPads(enum ME11Part ME)
 }
 
 
-void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, CSCDetId csc_id)
+void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, GEMCSCCoPadDigiCollection& out_co_pads, CSCDetId csc_id)
 {
   gemCoPadV.clear();
 
@@ -1808,7 +1809,10 @@ void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* 
         if (std::abs(p->roll() - co_p->roll()) > maxDeltaRollInCoPad_ ) continue;
 
         // make a new coincidence pad digi
-        gemCoPadV.push_back(GEMCSCCoPadDigi(*p,*co_p));
+	GEMCSCCoPadDigi pp(GEMCSCPadDigi((*p).pad(),(*p).bx(),id.roll()), GEMCSCPadDigi((*p).pad(),(*p).bx(),co_id.roll()));
+	gemCoPadV.push_back(pp);
+
+        out_co_pads.insertDigi(GEMDetId(id.region(), 1, 1, 1, id.chamber(), 0), pp);
       }
     }
   }
@@ -2122,7 +2126,7 @@ void CSCMotherboardME11GEM::printGEMTriggerPads(int bx_start, int bx_stop, bool 
       if (in_pads.size()){
         for (auto pad : in_pads){
           auto roll_id(GEMDetId(pad.first));
-          std::cout << "\tdetId " << pad.first << " " << roll_id << ", pad = " << pad.second->pad() << ", BX = " << pad.second->bx() + 6;
+          std::cout << "\tdetId " << roll_id << ", pad = " << pad.second->pad() << ", BX = " << pad.second->bx() + 6;
           if (isPadInOverlap(roll_id.roll())) std::cout << " (in overlap)" << std::endl;
           else std::cout << std::endl;
         }
@@ -2133,16 +2137,20 @@ void CSCMotherboardME11GEM::printGEMTriggerPads(int bx_start, int bx_stop, bool 
   }
   else{
     std::cout << "------------------------------------------------------------------------" << std::endl;
+    bool first = true;
+    if (first) {
+      std::cout << "* GEM trigger co-pads: " << std::endl;
+    }
+    first = false;
     for (auto p: coPads_) {
-      std::cout << "bx_start " << bx_start << " bx_stop " << bx_stop << " bx1 " << p.first << std::endl;
-      if (bx_start <= p.first and p.first <= bx_stop){
-        // check if the second pad is in the range
-        for (auto q: p.second){
-          int bx(((q.second)->second()).bx());
-          if (bx_start <= bx and bx <= bx_stop){
-            std::cout << "valid copad bx1 " << p.first << " bx2 " << bx << std::endl;
-          }
-        }
+      if (!(bx_start <=  p.first and p.first <= bx_stop)) continue;
+      if ((p.second).size()) std::cout << "N(pads) BX " << p.first << " : " << (p.second).size() << std::endl;
+      for (auto q: p.second){
+	auto p1((*(q.second)).first());
+	auto p2((*(q.second)).second());
+	std::cout << "\tdetId1 " << GEMDetId(q.first) 
+		  << ", pad1 = " << p1.pad() << ", BX1 = " << p1.bx() + 6 << ", roll1 = " << p1.roll() 
+		  << ", pad2 = " << p2.pad() << ", BX2 = " << p2.bx() + 6 << ", roll2 = " << p2.roll() << std::endl;
       }
     }
   }
@@ -2167,11 +2175,13 @@ void CSCMotherboardME11GEM::retrieveGEMPads(const GEMCSCPadDigiCollection* gemPa
   }
 }
 
-void CSCMotherboardME11GEM::retrieveGEMCoPads(std::vector<GEMCSCCoPadDigi> pads, unsigned id)
+void CSCMotherboardME11GEM::retrieveGEMCoPads(const GEMCSCCoPadDigiCollection* gemPads, unsigned id)
 {
-  for (auto p: pads){
-    const int bx(p.first().bx() + lct_central_bx);
-    coPads_[bx].push_back(std::make_pair(id,&p));
+  auto pads_in_det = gemPads->get(id);
+  for (auto pad = pads_in_det.first; pad != pads_in_det.second; ++pad) {
+    auto id_pad = std::make_pair(id, &(*pad));
+    const int bx_shifted(lct_central_bx + (pad->first()).bx());
+    coPads_[bx_shifted].push_back(id_pad);  
   }
 }
 

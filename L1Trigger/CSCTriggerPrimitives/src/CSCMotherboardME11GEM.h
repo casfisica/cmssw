@@ -143,10 +143,10 @@ class CSCMotherboardME11GEM : public CSCMotherboard
 
   void matchGEMPads(enum ME11Part = ME1B);
 
-  void buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, CSCDetId id);
+  void buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, GEMCSCCoPadDigiCollection& out_co_pads, CSCDetId id);
 
   void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id);
-  void retrieveGEMCoPads(std::vector<GEMCSCCoPadDigi> pads, unsigned id);
+  void retrieveGEMCoPads(const GEMCSCCoPadDigiCollection* pads, unsigned id);
 
   void createGEMRollEtaLUT(bool isEven);
 
