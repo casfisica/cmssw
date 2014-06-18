@@ -138,7 +138,7 @@ class CSCMotherboardME11GEM : public CSCMotherboard
   void matchGEMPads(enum ME11Part = ME1B);
 
   void buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, 
-			    GEMCSCPadDigiCollection& out_co_pads);
+                            GEMCSCPadDigiCollection& out_co_pads, CSCDetId id);
 
   void retrieveGEMPads(const GEMCSCPadDigiCollection* pads, unsigned id, bool iscopad = false);
   void retrieveGEMCoPads(std::vector<GEMCSCCoPadDigi> pads,unsigned id);
@@ -221,6 +221,7 @@ class CSCMotherboardME11GEM : public CSCMotherboard
 
   const CSCGeometry* csc_g;
   const GEMGeometry* gem_g;
+  CSCDetId csc_id;
 
   // debug gem matching
   bool debug_gem_matching;

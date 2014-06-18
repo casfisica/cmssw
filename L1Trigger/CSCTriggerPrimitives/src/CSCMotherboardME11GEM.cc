@@ -402,6 +402,7 @@ void CSCMotherboardME11GEM::run(const CSCWireDigiCollection* wiredc,
   const CSCDetId me1bId(cscChamberME1b->id());
   const CSCDetId me1aId(me1bId.endcap(), 1, 4, me1bId.chamber());
   const CSCChamber* cscChamberME1a(csc_g->chamber(me1aId));
+  csc_id = me1bId; 
 
   if (runME11ILT_){
 
@@ -518,7 +519,7 @@ void CSCMotherboardME11GEM::run(const CSCWireDigiCollection* wiredc,
 
     // build coincidence pads
     std::auto_ptr<GEMCSCPadDigiCollection> pCoPads(new GEMCSCPadDigiCollection());
-    buildCoincidencePads(gemPads, *pCoPads);
+    buildCoincidencePads(gemPads, *pCoPads, me1bId);
     
     // retrieve pads and copads in a certain BX window for this CSC 
     pads_.clear();
@@ -547,55 +548,17 @@ void CSCMotherboardME11GEM::run(const CSCWireDigiCollection* wiredc,
           GEMDetId roll_id(roll->id());
           auto pads_in_det = gemPads->get(roll_id);
           for (auto pad = pads_in_det.first; pad != pads_in_det.second; ++pad) {
-            //          auto id_pad = std::make_pair(roll_id(), &(*pad));
             if (abs((*pad).bx())<=1)
-            std::cout << "GEM: " << roll_id << " " << *pad << std::endl;
+              std::cout << "GEM: " << roll_id << " " << *pad << std::endl;
           }
         }
       }
-    }    
+    }
   }
 
   const bool hasPads(pads_.size()!=0);
   const bool hasCoPads(hasPads and coPads_.size()!=0);
   bool hasLCTs(false);
-
-  //  bool first = true;
-  if (false) for (int bx = 5; bx <= 7; bx++){
-    const bool hasALCT1(alct->bestALCT[bx].isValid());
-    const bool hasALCT2(alct->secondALCT[bx].isValid());
-    const bool hasCLCT1(clct->bestCLCT[bx].isValid());
-    const bool hasCLCT2(clct->secondCLCT[bx].isValid());
-    const bool hasCLCT1a(clct1a->bestCLCT[bx].isValid());
-    const bool hasCLCT2a(clct1a->secondCLCT[bx].isValid());
-    const bool hasGEM1(pads_[bx].size()!=0);
-    const bool hasGEM2(coPads_[bx].size()!=0);
-
-    // const bool ALCTandGEM1(hasALCT1 and hasGEM1);
-    // const bool ALCTandGEM2(hasALCT1 and hasGEM2);
-    // const bool CLCTandGEM1(hasCLCT1 and hasGEM1);
-    // const bool CLCTandGEM2(hasCLCT1 and hasGEM2);
-    // const bool ALCTandCLCT(hasALCT1 and hasCLCT1);
-    // const bool twoStubs(ALCTandGEM2 or CLCTandGEM2 or ALCTandCLCT or (ALCTandGEM1 and CLCTandGEM1));
-
-    const std::string ALCT1(hasALCT1? "X" : " ");
-    const std::string ALCT2(hasALCT2? "X" : " ");
-    const std::string CLCT1(hasCLCT1? "X" : " ");
-    const std::string CLCT2(hasCLCT2? "X" : " ");
-    const std::string CLCT1a(hasCLCT1a? "X" : " ");
-    const std::string CLCT2a(hasCLCT2a? "X" : " ");
-    const std::string GEM1(hasGEM1? "X" : " ");
-    const std::string GEM2(hasGEM2? "X" : " ");
-    
-    if (hasALCT1 or hasCLCT1 or hasCLCT1a or hasGEM1 or hasGEM2){
-      // reference BX
-      if (bx==5) std::cout << "BX  ALCT1  ALCT2  CLCTa1  CLCTa2  CLCTb1  CLCTb2  GEM1  GEM2"<<std::endl;
-      std::cout <<bx;
-      if (bx < 10) std::cout <<" ";
-      std::cout<<"    "<<ALCT1<<"      "<<ALCT2<<"       "<<CLCT1a<<"      "<<CLCT2a
-               <<"       "<<CLCT1<<"      "<<CLCT2<<"      "<<GEM1<<"     "<<GEM2<<std::endl;
-    }
-  }
 
   // ALCT-centric matching
   for (int bx_alct = 0; bx_alct < CSCAnodeLCTProcessor::MAX_ALCT_BINS; bx_alct++)
@@ -1812,18 +1775,23 @@ void CSCMotherboardME11GEM::matchGEMPads(enum ME11Part ME)
 }
 
 
-void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, GEMCSCPadDigiCollection& out_co_pads)
+void CSCMotherboardME11GEM::buildCoincidencePads(const GEMCSCPadDigiCollection* out_pads, GEMCSCPadDigiCollection& out_co_pads, CSCDetId csc_id)
 {
+  //  std::cout << "building copads" << std::endl;
+    
   gemCoPadV.clear();
 
   // Build coincidences
   for (auto det_range = out_pads->begin(); det_range != out_pads->end(); ++det_range) {
     const GEMDetId& id = (*det_range).first;
+    std::cout << id << std:endl;
+    if (id.region() != csc_id.zendcap() or id.station() != csc_id.station() or 
+        id.ring() != csc_id.ring() or id.chamber() != csc_id.chamber()) continue;
     
-    int roll(id.roll());
-
     // all coincidences detIDs will have layer=1
     if (id.layer() != 1) continue;
+
+    int roll(id.roll());
     
     // find the corresponding id with layer=2
     GEMDetId co_id(id.region(), id.ring(), id.station(), 2, id.chamber(), id.roll());
@@ -2216,33 +2184,10 @@ void CSCMotherboardME11GEM::retrieveGEMPads(const GEMCSCPadDigiCollection* gemPa
 
 void CSCMotherboardME11GEM::retrieveGEMCoPads(std::vector<GEMCSCCoPadDigi> pads, unsigned id)
 {
-  /*
-    cehck 
-  */
   for (auto p: pads){
-    std::cout << p << std::endl;
+    const int bx(p.first().bx() + lct_central_bx);
+    copads_[bx].push_back(std::make_pair(id,&p));
   }
-  /*
-  auto superChamber(gem_g->superChamber(id));
-  for (auto ch : superChamber->chambers()) {
-    for (auto roll : ch->etaPartitions()) {
-      GEMDetId roll_id(roll->id());
-      auto pads_in_det = gemPads->get(roll_id);
-      for (auto pad = pads_in_det.first; pad != pads_in_det.second; ++pad) {
-        auto id_pad = std::make_pair(roll_id(), &(*pad));
-        const int bx_shifted(lct_central_bx + pad->bx());
-        for (int bx = bx_shifted - maxDeltaBXPad_;bx <= bx_shifted + maxDeltaBXPad_; ++bx) {
-          if (iscopad){
-            if(bx != lct_central_bx) continue;
-            coPads_[bx].push_back(id_pad);  
-          }else{
-            pads_[bx].push_back(id_pad);  
-          }
-        }
-      }
-    }
-  }
-  */
 }
 
 bool CSCMotherboardME11GEM::isPadInOverlap(int roll)
