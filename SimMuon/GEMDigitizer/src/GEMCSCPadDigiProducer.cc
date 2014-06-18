@@ -57,26 +57,29 @@ void GEMCSCPadDigiProducer::buildPads(const GEMDigiCollection &det_digis,
   auto etaPartitions = geometry_->etaPartitions();
   for(auto p: etaPartitions)
   {
-    // set of <pad, bx> pairs, sorted first by pad then by bx
-    std::set<std::pair<int, int> > proto_pads;
+    // set of <pad, bx, roll> pairs, sorted first by pad then by bx
+    std::set<std::tuple<int, int, int> > proto_pads;
   
+    // fetch the roll from id
+    int roll(p->id().roll());
+    
     // walk over digis in this partition, 
     // and stuff them into a set of unique pads (equivalent of OR operation)
     auto digis = det_digis.get(p->id());
     for (auto d = digis.first; d != digis.second; ++d)
     {
       int pad_num = 1 + static_cast<int>( p->padOfStrip(d->strip()) );
-      auto pad = std::make_pair(pad_num, d->bx());
+      auto pad = std::make_tuple(pad_num, d->bx(), roll);
       proto_pads.insert(pad);
     }
   
-    // in the future, do some dead-time handling
+    // in the future, do some dead-time handlng
     // emulateDeadTime(proto_pads)
   
     // fill the output collections
     for (auto & d: proto_pads)
     {
-      GEMCSCPadDigi pad_digi(d.first, d.second);
+      GEMCSCPadDigi pad_digi(std::get<0>(d),std::get<1>(d),std::get<2>(d));
       out_pads.insertDigi(p->id(), pad_digi);
     }
   }
@@ -106,7 +109,7 @@ void GEMCSCPadDigiProducer::buildPads(const GEMDigiCollection &det_digis,
         if (p->pad() != co_p->pad() || std::abs(p->bx() - co_p->bx()) > maxDeltaBX_ ) continue;
 
         // always use layer1 pad's BX as a copad's BX
-        GEMCSCPadDigi co_pad_digi(p->pad(), p->bx());
+        GEMCSCPadDigi co_pad_digi(p->pad(), p->bx(), p->roll());
         out_co_pads.insertDigi(id, co_pad_digi);
       }
     }
