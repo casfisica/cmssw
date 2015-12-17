@@ -32,7 +32,6 @@ def customise(process):
 
 def customise_Digi(process):
     process.digitisation_step.remove(process.mix.digitizers.pixel)
-    process.load('Geometry.TrackerGeometryBuilder.StackedTrackerGeometry_cfi')
     process.load('SimTracker.SiPhase2Digitizer.phase2TrackerDigitizer_cfi')
     process.mix.digitizers.pixel=process.phase2TrackerDigitizer
     process.mix.digitizers.strip.ROUList = cms.vstring("g4SimHitsTrackerHitsPixelBarrelLowTof",
@@ -48,6 +47,12 @@ def customise_Digi(process):
         process.mix.digitizers.mergedtruth.simHitCollections.tracker.remove( cms.InputTag("g4SimHits","TrackerHitsTIDLowTof"))
         process.mix.digitizers.mergedtruth.simHitCollections.tracker.remove( cms.InputTag("g4SimHits","TrackerHitsTIDHighTof"))
 
+    # keep new digis
+    alist=['FEVTDEBUG','FEVTDEBUGHLT','FEVT']
+    for a in alist:
+        b=a+'output'
+        if hasattr(process,b):
+            getattr(process,b).outputCommands.append('keep Phase2TrackerDigiedmDetSetVector_*_*_*')
     return process
 
 
@@ -164,6 +169,7 @@ def customise_Reco(process,pileup):
 
     # Need these until pixel templates are used
     process.load("SLHCUpgradeSimulations.Geometry.recoFromSimDigis_cff")
+    process.siPixelClusters.src = cms.InputTag('simSiPixelDigis', "Pixel")
     # PixelCPEGeneric #
     process.PixelCPEGenericESProducer.Upgrade = cms.bool(True)
     process.PixelCPEGenericESProducer.UseErrorsFromTemplates = cms.bool(False)
@@ -212,17 +218,6 @@ def customise_Reco(process,pileup):
 
 def customise_condOverRides(process):
     process.load('SLHCUpgradeSimulations.Geometry.fakeConditions_BarrelEndcap5DPixel10D_cff')
-    process.trackerNumberingSLHCGeometry.layerNumberPXB = cms.uint32(20)
-    process.trackerTopologyConstants.pxb_layerStartBit = cms.uint32(20)
-    process.trackerTopologyConstants.pxb_ladderStartBit = cms.uint32(12)
-    process.trackerTopologyConstants.pxb_moduleStartBit = cms.uint32(2)
-    process.trackerTopologyConstants.pxb_layerMask = cms.uint32(15)
-    process.trackerTopologyConstants.pxb_ladderMask = cms.uint32(255)
-    process.trackerTopologyConstants.pxb_moduleMask = cms.uint32(1023)
-    process.trackerTopologyConstants.pxf_diskStartBit = cms.uint32(18)
-    process.trackerTopologyConstants.pxf_bladeStartBit = cms.uint32(12)
-    process.trackerTopologyConstants.pxf_panelStartBit = cms.uint32(10)
-    process.trackerTopologyConstants.pxf_moduleMask = cms.uint32(255)
     return process
 
 
@@ -263,11 +258,14 @@ def customise_DQM(process,pileup):
 #    process.dqmoffline_step.remove(process.TrackMonStep9)
 #    process.dqmoffline_step.remove(process.TrackMonStep10)
 #    process.dqmoffline_step.remove(process.PixelTrackingRecHitsValid)
+    # SiPixelRawDataErrorSource doesn't work with Stacks, so take it out
+    process.dqmoffline_step.remove(process.SiPixelRawDataErrorSource)
 
-    #add Phase 2 Upgrade Outer Tracker
-    stripIndex=process.DQMOfflinePreDPG.index(process.SiStripDQMTier0)
-    process.load("DQM.Phase2OuterTracker.OuterTrackerSourceConfig_cff")
-    process.dqmoffline_step.insert(stripIndex, process.OuterTrackerSource)
+    ## DQM for stacks doesn't work yet, so skip adding the outer tracker.
+    ##add Phase 2 Upgrade Outer Tracker
+    #stripIndex=process.DQMOfflinePreDPG.index(process.SiStripDQMTier0)
+    #process.load("DQM.Phase2OuterTracker.OuterTrackerSourceConfig_cff")
+    #process.dqmoffline_step.insert(stripIndex, process.OuterTrackerSource)
 
     #put isUpgrade flag==true
     process.SiPixelRawDataErrorSource.isUpgrade = cms.untracked.bool(True)
@@ -295,15 +293,26 @@ def customise_Validation(process,pileup):
     process.validation_step.remove(process.trackerHitsValid)
     process.validation_step.remove(process.StripTrackingRecHitsValid)
 
-    # Include Phase 2 Upgrade Outer Tracker
-    stripVIndex=process.globalValidation.index(process.trackerDigisValidation)
-    process.load("Validation.Phase2OuterTracker.OuterTrackerSourceConfig_cff")
-    process.validation_step.insert(stripVIndex, process.OuterTrackerSource)
+    ## This next part doesn't work for stacks yet, so skip adding it.
+    ## Include Phase 2 Upgrade Outer Tracker
+    #stripVIndex=process.globalValidation.index(process.trackerDigisValidation)
+    #process.load("Validation.Phase2OuterTracker.OuterTrackerSourceConfig_cff")
+    #process.validation_step.insert(stripVIndex, process.OuterTrackerSource)
 
+    process.pixelDigisValid.src = cms.InputTag('simSiPixelDigis', "Pixel")
+    process.tpClusterProducer.pixelSimLinkSrc = cms.InputTag("simSiPixelDigis","Pixel")
+    
     # We don't run the HLT
     process.validation_step.remove(process.HLTSusyExoVal)
     process.validation_step.remove(process.hltHiggsValidator)
     process.validation_step.remove(process.relvalMuonBits)
+    # TrackerHitAssociator needs updating for stacks, so all of the following
+    # need to be taken out. They either require hit association or rely on a
+    # module that does.
+    process.validation_step.remove(process.globalrechitsanalyze)
+    process.validation_step.remove(process.pixRecHitsValid)
+    process.validation_step.remove(process.recoMuonValidation)
+    
     if pileup>30:
         process.trackValidator.label=cms.VInputTag(cms.InputTag("cutsRecoTracksHp"))
         process.tracksValidationSelectors = cms.Sequence(process.cutsRecoTracksHp)
