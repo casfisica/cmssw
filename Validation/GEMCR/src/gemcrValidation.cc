@@ -173,12 +173,12 @@ auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientT
   for (auto hit1 : muRecHits){/* Range-based for loop, access by value, the type of hit1 is MuonTransientTrackingRecHit::MuonRecHitContaine&*/
     for (auto hit2 : muRecHits){
       if (hit1->globalPosition().y() < hit2->globalPosition().y()){/*y direction is up-down? (cosmic), see if hit1 is Higher than the hit2*/
-        LocalPoint segPos = hit1->localPosition();/**/
-        GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/**/
+        LocalPoint segPos = hit1->localPosition();/*Define a LocalPoint with the position of hit1*/
+        GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/*Define a vector called segDirGV from hit2-hit1 */
                               (hit2->globalPosition().y() - hit1->globalPosition().y()),
                               hit2->globalPosition().z() - hit1->globalPosition().z());
 
-        segDirGV *=10;
+        segDirGV *=10;/*multiply per 10 ????*/
         //segDirGV *=1;
         LocalVector segDir = hit1->det()->toLocal(segDirGV);
 
