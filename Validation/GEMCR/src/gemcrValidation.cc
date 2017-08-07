@@ -60,7 +60,7 @@ gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidatio
 void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const & Run, edm::EventSetup const & iSetup ) {
   GEMGeometry_ = initGeometry(iSetup);
   if ( GEMGeometry_ == nullptr) return ;  
-
+  
   const std::vector<const GEMSuperChamber*>& superChambers_ = GEMGeometry_->superChambers();   
   for (auto sch : superChambers_){
     int n_lay = sch->nChambers();
@@ -160,14 +160,21 @@ const GEMGeometry* gemcrValidation::initGeometry(edm::EventSetup const & iSetup)
 gemcrValidation::~gemcrValidation() {
 }
 
+/////////////////////////////////////////////////
+/// Function to modify CAS
+/////////////////////////////////////////////////
+
+/*This function recives MuonRecHitContainer and return std::vector<TrajectorySeed> */
 auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits)
+/*auto_ptr is a smart pointer that manages an object obtained via new expression and deletes that object when auto_ptr itself is destroyed*/
+/*std::unique_ptr is preferred for this and other uses. (since C++11)*/
 {
   auto_ptr<std::vector<TrajectorySeed> > tmptrajectorySeeds( new vector<TrajectorySeed>());
-  for (auto hit1 : muRecHits){
+  for (auto hit1 : muRecHits){/* Range-based for loop, access by value, the type of hit1 is MuonTransientTrackingRecHit::MuonRecHitContaine&*/
     for (auto hit2 : muRecHits){
-      if (hit1->globalPosition().y() < hit2->globalPosition().y()){
-        LocalPoint segPos = hit1->localPosition();
-        GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),
+      if (hit1->globalPosition().y() < hit2->globalPosition().y()){/*y direction is up-down? (cosmic), see if hit1 is Higher than the hit2*/
+        LocalPoint segPos = hit1->localPosition();/**/
+        GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/**/
                               (hit2->globalPosition().y() - hit1->globalPosition().y()),
                               hit2->globalPosition().z() - hit1->globalPosition().z());
 
