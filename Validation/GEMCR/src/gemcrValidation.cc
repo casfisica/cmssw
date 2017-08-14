@@ -36,6 +36,14 @@
 
 #include <TCanvas.h>
 using namespace std;
+
+struct RefLayer{
+  //layer 1 is the upper one
+  bool layer1;
+  bool layer2;
+  bool layer3;
+};
+
 gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidation(cfg)
 {
   InputTagToken_RH = consumes<GEMRecHitCollection>(cfg.getParameter<edm::InputTag>("recHitsInputLabel"));
@@ -71,7 +79,7 @@ void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const
   n_ch = gemChambers.size();
   
   ibooker.setCurrentFolder("MuonGEMRecHitsV/GEMRecHitsTask");
-
+  
   gemcr_g = ibooker.book3D("gemcr_g","GEMCR GLOBAL RECHITS", 200,-100,100,20,-55,55, 140,0,140);
   gem_cls_tot = ibooker.book1D("cluster_size","Cluseter size",20,0,20);  
   gem_bx_tot = ibooker.book1D("bx", "BX" , 30, -15,15);
@@ -160,12 +168,13 @@ const GEMGeometry* gemcrValidation::initGeometry(edm::EventSetup const & iSetup)
 gemcrValidation::~gemcrValidation() {
 }
 
+
 /////////////////////////////////////////////////
 /// Function to modify CAS
 /////////////////////////////////////////////////
 
 /*This function recives MuonRecHitContainer and return std::vector<TrajectorySeed> */
-auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits)
+auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits,RefLayer)
 /*auto_ptr is a smart pointer that manages an object obtained via new expression and deletes that object when auto_ptr itself is destroyed*/
 /*std::unique_ptr is preferred for this and other uses. (since C++11)*/
 {
