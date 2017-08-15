@@ -22,6 +22,12 @@
 
 
 
+struct RefLayer{
+  //layer 1 is the upper one
+  bool layer1;
+  bool layer2;
+  bool layer3;
+};
 
 class gemcrValidation : public GEMBaseValidation
 {
