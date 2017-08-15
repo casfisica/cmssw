@@ -37,12 +37,7 @@
 #include <TCanvas.h>
 using namespace std;
 
-struct RefLayer{
-  //layer 1 is the upper one
-  bool layer1;
-  bool layer2;
-  bool layer3;
-};
+
 
 gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidation(cfg)
 {
@@ -174,7 +169,7 @@ gemcrValidation::~gemcrValidation() {
 /////////////////////////////////////////////////
 
 /*This function recives MuonRecHitContainer and return std::vector<TrajectorySeed> */
-auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits,RefLayer)
+auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits,RefLayer reflayer)
 /*auto_ptr is a smart pointer that manages an object obtained via new expression and deletes that object when auto_ptr itself is destroyed*/
 /*std::unique_ptr is preferred for this and other uses. (since C++11)*/
 {
