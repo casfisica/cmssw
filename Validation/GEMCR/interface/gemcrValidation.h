@@ -20,15 +20,6 @@
 #include "RecoMuon/StandAloneTrackFinder/interface/StandAloneMuonSmoother.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 
-
-
-struct RefLayer{
-  //layer 1 is the upper one
-  bool layer1;
-  bool layer2;
-  bool layer3;
-};
-
 class gemcrValidation : public GEMBaseValidation
 {
 public:
