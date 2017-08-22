@@ -38,6 +38,28 @@
 using namespace std;
 
 
+MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContaine &rechit, std::vector<bool> _Layers )
+  :MuonRecHitContainer( rechit )//MuonRecHitContaine constructor call
+{
+  Layers = _Layers;
+}
+
+MuonRecHitContainerLayered::~MuonRecHitContainerLayere( void ){
+
+}
+//Use of the Error handler???
+bool MuonRecHitContainerLayered::GetLayer( unsigned int _L ){
+  if (_L > Layers.capacity()){
+    cout<< "Max number of layer exceeded" <<endl;
+  }else{
+    return Layers[_L];
+  }
+}
+
+//MuonTransientTrackingRecHit::MuonRecHitContaine& MuonRecHitContainerLayered::GetmuRecHits( void ){
+//  return MuonRecHitContainer;
+//}
+
 
 gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidation(cfg)
 {
