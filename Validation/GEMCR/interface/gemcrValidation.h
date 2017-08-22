@@ -20,6 +20,21 @@
 #include "RecoMuon/StandAloneTrackFinder/interface/StandAloneMuonSmoother.h"
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 
+
+class MuonRecHitContainerLayered : public MuonTransientTrackingRecHit::MuonRecHitContainer {
+ protected:
+  std::vector<bool> Layers;//empty vector of bools to contain the reference layer info (true, false, false) means layer 1 (of 3) is the reference 
+ public:
+  MuonRecHitContainerLayere( MuonTransientTrackingRecHit::MuonRecHitContaine &rechit, std::vector<bool> _Layers );
+  ~MuonRecHitContainerLayere( void );
+  bool GetLayer( unsigned int _L );
+  // MuonTransientTrackingRecHit::MuonRecHitContaine& GetmuRecHits(void);
+  
+}
+
+
+
+
 class gemcrValidation : public GEMBaseValidation
 {
 public:
