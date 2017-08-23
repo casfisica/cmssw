@@ -25,12 +25,11 @@ class MuonRecHitContainerLayered : public MuonTransientTrackingRecHit::MuonRecHi
  protected:
   std::vector<bool> Layers;//empty vector of bools to contain the reference layer info (true, false, false) means layer 1 (of 3) is the reference 
  public:
-  MuonRecHitContainerLayere( MuonTransientTrackingRecHit::MuonRecHitContaine &rechit, std::vector<bool> _Layers );
-  ~MuonRecHitContainerLayere( void );
+  MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContainer &rechit, std::vector<bool> _Layers );
+  ~MuonRecHitContainerLayered( void );
   bool GetLayer( unsigned int _L );
   // MuonTransientTrackingRecHit::MuonRecHitContaine& GetmuRecHits(void);
-  
-}
+};
 
 
 

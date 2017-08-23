@@ -33,27 +33,32 @@
 
 
 #include <iomanip>
-
+#include<exception>
 #include <TCanvas.h>
 using namespace std;
 
 
-MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContaine &rechit, std::vector<bool> _Layers )
+MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContainer &rechit, std::vector<bool> _Layers )
   :MuonRecHitContainer( rechit )//MuonRecHitContaine constructor call
 {
   Layers = _Layers;
 }
 
-MuonRecHitContainerLayered::~MuonRecHitContainerLayere( void ){
+MuonRecHitContainerLayered::~MuonRecHitContainerLayered( void ){
 
 }
 //Use of the Error handler???
 bool MuonRecHitContainerLayered::GetLayer( unsigned int _L ){
-  if (_L > Layers.capacity()){
-    cout<< "Max number of layer exceeded" <<endl;
-  }else{
-    return Layers[_L];
-  }
+  try {
+    if( _L > Layers.capacity() )
+      {
+	throw  "Max number of layer exceeded";
+      }
+  }catch(const char* msg)
+    {
+      std::cerr << msg << endl;
+    }
+  return Layers[_L];  
 }
 
 //MuonTransientTrackingRecHit::MuonRecHitContaine& MuonRecHitContainerLayered::GetmuRecHits( void ){
