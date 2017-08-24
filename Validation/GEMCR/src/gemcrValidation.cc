@@ -196,7 +196,7 @@ gemcrValidation::~gemcrValidation() {
 /////////////////////////////////////////////////
 
 /*This function recives MuonRecHitContainer and return std::vector<TrajectorySeed> */
-auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits)
+auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonRecHitContainerLayered &muRecHits)
 /*auto_ptr is a smart pointer that manages an object obtained via new expression and deletes that object when auto_ptr itself is destroyed*/
 /*std::unique_ptr is preferred for this and other uses. (since C++11)*/
 {
@@ -414,7 +414,14 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     if (TCN < 3) continue;
     gem_chamber_track[findIndex(tch.id())]->Fill(0.5);
     auto_ptr<std::vector<TrajectorySeed> > trajectorySeeds( new vector<TrajectorySeed>());
-    trajectorySeeds =findSeeds(muRecHits);
+
+    /////////////////////////////////////////////////////////////////////////////////////
+    //Changed to use the new class CAS
+    /////////////////////////////////////////////////////////////////////////////////////
+    std::vector<bool> Layers {true, true, false};//temporal 
+    MuonRecHitContainerLayered muRecHitsl(muRecHits,Layers);
+    trajectorySeeds =findSeeds(muRecHitsl);
+    /////////////////////////////////////////////////////////////////////////////////////
     Trajectory bestTrajectory;
     TrajectorySeed bestSeed;
     trajectoryh->Fill(0, trajectorySeeds->size());  

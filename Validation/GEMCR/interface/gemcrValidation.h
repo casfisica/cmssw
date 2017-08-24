@@ -32,8 +32,6 @@ class MuonRecHitContainerLayered : public MuonTransientTrackingRecHit::MuonRecHi
 };
 
 
-
-
 class gemcrValidation : public GEMBaseValidation
 {
 public:
@@ -91,7 +89,7 @@ private:
   MuonServiceProxy* theService;
   CosmicMuonSmoother* theSmoother;
   KFUpdator* theUpdator;
-  std::auto_ptr<std::vector<TrajectorySeed> > findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits);
+  std::auto_ptr<std::vector<TrajectorySeed> > findSeeds(MuonRecHitContainerLayered &muRecHits);
   Trajectory makeTrajectory(TrajectorySeed seed, MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits, std::vector<GEMChamber> gemChambers, GEMChamber testChamber);
   edm::EDGetToken InputTagToken_, InputTagToken_RH, InputTagToken_TR, InputTagToken_TS, InputTagToken_DG;
 };
