@@ -47,7 +47,6 @@ MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRec
 MuonRecHitContainerLayered::~MuonRecHitContainerLayered( void ){
 
 }
-//Use of the Error handler???
 bool MuonRecHitContainerLayered::GetLayer( unsigned int _L ){
   try {
     if( _L > Layers.capacity() )
@@ -422,6 +421,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     MuonRecHitContainerLayered muRecHitsl(muRecHits,Layers);
     trajectorySeeds =findSeeds(muRecHitsl);
     /////////////////////////////////////////////////////////////////////////////////////
+
     Trajectory bestTrajectory;
     TrajectorySeed bestSeed;
     trajectoryh->Fill(0, trajectorySeeds->size());  
