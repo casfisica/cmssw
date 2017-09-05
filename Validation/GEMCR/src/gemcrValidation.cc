@@ -27,6 +27,9 @@
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHit.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
 
+#include "DataFormats/MuonDetId/interface/GEMDetId.h"
+#include "DataFormats/DetId/interface/DetId.h"
+
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 
 #include "DataFormats/GEMDigi/interface/GEMDigiCollection.h"
@@ -38,7 +41,7 @@
 using namespace std;
 
 
-MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContainer &rechit, std::vector<bool> _Layers )
+MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContainer &rechit, std::vector<int> _Layers )
   :MuonRecHitContainer( rechit )//MuonRecHitContaine constructor call
 {
   Layers = _Layers;
@@ -47,7 +50,7 @@ MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRec
 MuonRecHitContainerLayered::~MuonRecHitContainerLayered( void ){
 
 }
-bool MuonRecHitContainerLayered::GetLayer( unsigned int _L ){
+int MuonRecHitContainerLayered::GetLayer( unsigned int _L ){
   try {
     if( _L > Layers.capacity() )
       {
@@ -84,6 +87,7 @@ gemcrValidation::gemcrValidation(const edm::ParameterSet& cfg): GEMBaseValidatio
   edm::ParameterSet smootherPSet = cfg.getParameter<edm::ParameterSet>("MuonSmootherParameters");
   theSmoother = new CosmicMuonSmoother(smootherPSet, theService);
   theUpdator = new KFUpdator();
+  refChambers = cfg.getParameter<std::vector<int>>("refChambers");//Reference chambers
 }
 
 void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const & Run, edm::EventSetup const & iSetup ) {
@@ -121,7 +125,7 @@ void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const
   rh2_chamber = ibooker.book1D("rh2_chamber", "cut passed recHits ",n_ch,0,n_ch); 
   rh3_chamber = ibooker.book1D("rh3_chamber", "tracking recHits",n_ch,0,n_ch); 
   for(int c = 0; c<n_ch; c++){
-   cout << gemChambers[c].id() << endl;
+    //   cout << gemChambers[c].id() << endl;#CAS
    GEMDetId gid = gemChambers[c].id();
    string b_name = "chamber_"+to_string(gid.chamber())+"_layer_"+to_string(gid.layer());
    tr_chamber->setBinLabel(c+1,b_name);
@@ -201,38 +205,70 @@ auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonRecHitCont
 {
   auto_ptr<std::vector<TrajectorySeed> > tmptrajectorySeeds( new vector<TrajectorySeed>());
   for (auto hit1 : muRecHits){/* Range-based for loop, access by value, the type of hit1 is MuonTransientTrackingRecHit::MuonRecHitContaine&*/
-    for (auto hit2 : muRecHits){
-      if (hit1->globalPosition().y() < hit2->globalPosition().y()){/*y direction is up-down? (cosmic), see if hit1 is Higher than the hit2*/
-        LocalPoint segPos = hit1->localPosition();/*Define a LocalPoint with the position of hit1*/
-        GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/*Define a vector called segDirGV from hit2-hit1 */
-                              (hit2->globalPosition().y() - hit1->globalPosition().y()),
-                              hit2->globalPosition().z() - hit1->globalPosition().z());
+    
+    /////////////////////////////////////////////////////////////
+    // Requesting Only seed for reference layer
+    /////////////////////////////////////////////////////////////
+    GEMDetId hit1ID(hit1->rawId());
+    //    cout<< "layer" <<hit1ID.layer() <<endl;
+    //    cout<< "chamber" <<hit1ID.chamber() <<endl;
+    bool flaghit1 = false;
+    for (auto chambers : muRecHits.Layers){
+      if( chambers == hit1ID.chamber() ){
+	flaghit1 = true;
+      }
+    }
 
-        segDirGV *=10;/*multiply per 10 ????*/
-        //segDirGV *=1;
-        LocalVector segDir = hit1->det()->toLocal(segDirGV);
+    if(flaghit1){//Condition over hit1
 
-        int charge= 1;
-        LocalTrajectoryParameters param(segPos, segDir, charge);
+      for (auto hit2 : muRecHits){
 
-        AlgebraicSymMatrix mat(5,0);
-        mat = hit1->parametersError().similarityT( hit1->projectionMatrix() );
-        LocalTrajectoryError error(asSMatrix<5>(mat));
-
-        TrajectoryStateOnSurface tsos(param, error, hit1->det()->surface(), &*theService->magneticField());
-        uint32_t id = hit1->rawId();
-        PTrajectoryStateOnDet const & seedTSOS = trajectoryStateTransform::persistentState(tsos, id);
-
-        edm::OwnVector<TrackingRecHit> seedHits;
-        seedHits.push_back(hit1->hit()->clone());
-        seedHits.push_back(hit2->hit()->clone());
-
-        TrajectorySeed seed(seedTSOS,seedHits,alongMomentum);
-        tmptrajectorySeeds->push_back(seed);
+	GEMDetId hit2ID(hit2->rawId());
+	bool flaghit2 = false;
+	for (auto chambers : muRecHits.Layers){
+	  if( chambers == hit2ID.chamber() ){
+	    flaghit2 = true;
+	  }
+	}
+	
+	if (flaghit2){//Condition over the hit2
+// 	  cout<< "hit1ID_chamber" <<hit1ID.chamber() <<endl;
+// 	  cout<< "hit2ID_chamber" <<hit2ID.chamber() <<endl;
+	  ////////////////////////////////////////////////////////////
+	  
+	  if (hit1->globalPosition().y() < hit2->globalPosition().y()){/*y direction is up-down? (cosmic), see if hit1 is Higher than the hit2*/
+	    LocalPoint segPos = hit1->localPosition();/*Define a LocalPoint with the position of hit1*/
+	    GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/*Define a vector called segDirGV from hit2-hit1 */
+				  (hit2->globalPosition().y() - hit1->globalPosition().y()),
+				  hit2->globalPosition().z() - hit1->globalPosition().z());
+	    //cout<< " hit1->localPosition().y()" << hit1->localPosition().y()<<endl;
+	    //cout<< " hit1->globalPosition().y()" << hit1->globalPosition().y()<<endl;
+	    segDirGV *=10;/*multiply per 10 ????*/
+	    //segDirGV *=1;
+	    LocalVector segDir = hit1->det()->toLocal(segDirGV);
+	    
+	    int charge= 1;
+	    LocalTrajectoryParameters param(segPos, segDir, charge);
+	    
+	    AlgebraicSymMatrix mat(5,0);
+	    mat = hit1->parametersError().similarityT( hit1->projectionMatrix() );
+	    LocalTrajectoryError error(asSMatrix<5>(mat));
+	    
+	    TrajectoryStateOnSurface tsos(param, error, hit1->det()->surface(), &*theService->magneticField());
+	    uint32_t id = hit1->rawId();
+	    PTrajectoryStateOnDet const & seedTSOS = trajectoryStateTransform::persistentState(tsos, id);
+	    
+	    edm::OwnVector<TrackingRecHit> seedHits;
+	    seedHits.push_back(hit1->hit()->clone());
+	    seedHits.push_back(hit2->hit()->clone());
+	    
+	    TrajectorySeed seed(seedTSOS,seedHits,alongMomentum);
+	    tmptrajectorySeeds->push_back(seed);
+	  }
+	}
       }
     }
   }
-
   return tmptrajectorySeeds;
 }
 
@@ -417,8 +453,8 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     /////////////////////////////////////////////////////////////////////////////////////
     //Changed to use the new class CAS
     /////////////////////////////////////////////////////////////////////////////////////
-    std::vector<bool> Layers {true, true, false};//temporal 
-    MuonRecHitContainerLayered muRecHitsl(muRecHits,Layers);
+    //std::vector<unsigned> Layers {, true, false};//temporal 
+    MuonRecHitContainerLayered muRecHitsl(muRecHits,refChambers);
     trajectorySeeds =findSeeds(muRecHitsl);
     /////////////////////////////////////////////////////////////////////////////////////
 
