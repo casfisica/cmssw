@@ -21,6 +21,16 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 
 
+class MuonRecHitContainerLayered : public MuonTransientTrackingRecHit::MuonRecHitContainer {
+ protected:
+  
+ public:
+  std::vector<int> Layers;
+  MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContainer &rechit, std::vector<int> _Layers );
+  ~MuonRecHitContainerLayered( void );
+  int GetLayer( unsigned int _L );
+  // MuonTransientTrackingRecHit::MuonRecHitContaine& GetmuRecHits(void);
+};
 
 
 class gemcrValidation : public GEMBaseValidation
@@ -80,7 +90,9 @@ private:
   MuonServiceProxy* theService;
   CosmicMuonSmoother* theSmoother;
   KFUpdator* theUpdator;
-  std::auto_ptr<std::vector<TrajectorySeed> > findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits);
+  std::vector<int> refChambers;
+
+  std::auto_ptr<std::vector<TrajectorySeed> > findSeeds(MuonRecHitContainerLayered &muRecHits);
   Trajectory makeTrajectory(TrajectorySeed seed, MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits, std::vector<GEMChamber> gemChambers, GEMChamber testChamber);
   edm::EDGetToken InputTagToken_, InputTagToken_RH, InputTagToken_TR, InputTagToken_TS, InputTagToken_DG;
 };
