@@ -387,6 +387,13 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     gem_cls_tot->Fill(clusterSize);
     gem_bx_tot->Fill(bx);
     rh1_chamber->Fill(index);
+    //CAS
+    
+    for (auto chambers : refChambers){
+      if( chambers == id.chamber() ){
+	NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+      }
+    }
 
     for(int i = firstClusterStrip; i < (firstClusterStrip + clusterSize); i++){
       gem_chamber_digi_recHit[index]->Fill(i,rh_roll);
@@ -464,33 +471,6 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     //std::vector<unsigned> Layers {, true, false};//temporal 
     MuonRecHitContainerLayered muRecHitsl(muRecHits,refChambers);
     trajectorySeeds =findSeeds(muRecHitsl);
-    
-    for (GEMRecHitCollection::const_iterator recHit = trajectorySeeds->begin(); recHit != trajectorySeeds->end(); ++recHit){
-      Float_t  rh_l_x = recHit->localPosition().x();
-      Int_t  bx = recHit->BunchX();
-      Int_t  clusterSize = recHit->clusterSize();
-      Int_t  firstClusterStrip = recHit->firstClusterStrip();
-      
-      GEMDetId id((*recHit).gemId());
-      int index = findIndex(id);
-      firedCh[index] = 1;
-      rMul[index] += 1;
-      //checkRH[index] = 1;
-      Short_t rh_roll = (Short_t) id.roll();
-      LocalPoint recHitLP = recHit->localPosition();
-      
-      if ( GEMGeometry_->idToDet((*recHit).gemId()) == nullptr) {
-	std::cout<<"This gem recHit did not matched with GEMGeometry."<<std::endl;
-	continue;
-      }
-      //Puts the points coordenades for a 3D plot 
-      GlobalPoint recHitGP = GEMGeometry_->idToDet((*recHit).gemId())->surface().toGlobal(recHitLP);
-      Float_t     rh_g_X = recHitGP.x();
-      Float_t     rh_g_Y = recHitGP.y();
-      Float_t     rh_g_Z = recHitGP.z();
-      NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
-    }
-  
     /////////////////////////////////////////////////////////////////////////////////////
 
     Trajectory bestTrajectory;
