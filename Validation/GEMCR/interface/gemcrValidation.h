@@ -67,7 +67,6 @@ private:
   std::vector<MonitorElement*> gem_chamber_bestChi2;
   std::vector<MonitorElement*> gem_chamber_track;
 
-
   MonitorElement* gemcr_g;
   MonitorElement* gem_cls_tot;
   MonitorElement* gem_bx_tot;
@@ -82,7 +81,8 @@ private:
   MonitorElement* trajectoryh;
   MonitorElement* firedMul;
   MonitorElement* firedChamber;
-  
+  MonitorElement* NumberOfSeeds;
+
 
 
   std::vector<GEMChamber> gemChambers;
@@ -95,6 +95,11 @@ private:
   std::auto_ptr<std::vector<TrajectorySeed> > findSeeds(MuonRecHitContainerLayered &muRecHits);
   Trajectory makeTrajectory(TrajectorySeed seed, MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits, std::vector<GEMChamber> gemChambers, GEMChamber testChamber);
   edm::EDGetToken InputTagToken_, InputTagToken_RH, InputTagToken_TR, InputTagToken_TS, InputTagToken_DG;
+
+  // ----------member data ---------------------------      
+
+  //   static unsigned int SeedsNumber; 
+
 };
 
 #endif

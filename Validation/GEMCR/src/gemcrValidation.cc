@@ -22,7 +22,7 @@
 #include "TrackingTools/TrajectoryState/interface/TrajectoryStateTransform.h"
 
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "DataFormats/TrajectorySeed/interface/TrajectorySeed.h"
+#include "DataFormats/TrajectorySeed/interface/"
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
 #include "RecoMuon/TransientTrackingRecHit/interface/MuonTransientTrackingRecHit.h"
 #include "RecoMuon/TrackingTools/interface/MuonServiceProxy.h"
@@ -40,6 +40,8 @@
 #include <TCanvas.h>
 using namespace std;
 
+// ----------member data ---------------------------   
+//unsigned int SeedsNumber;
 
 MuonRecHitContainerLayered::MuonRecHitContainerLayered( MuonTransientTrackingRecHit::MuonRecHitContainer &rechit, std::vector<int> _Layers )
   :MuonRecHitContainer( rechit )//MuonRecHitContaine constructor call
@@ -124,6 +126,10 @@ void gemcrValidation::bookHistograms(DQMStore::IBooker & ibooker, edm::Run const
   rh1_chamber = ibooker.book1D("rh1_chamber", "all recHits",n_ch,0,n_ch); 
   rh2_chamber = ibooker.book1D("rh2_chamber", "cut passed recHits ",n_ch,0,n_ch); 
   rh3_chamber = ibooker.book1D("rh3_chamber", "tracking recHits",n_ch,0,n_ch); 
+  //Counter of Number of seed CAS
+  NumberOfSeeds  = ibooker.book3D("NumberOfSeeds","RECHITS only from seeds", 200,-100,100,20,-55,55, 140,0,140);
+  
+
   for(int c = 0; c<n_ch; c++){
     //   cout << gemChambers[c].id() << endl;#CAS
    GEMDetId gid = gemChambers[c].id();
@@ -367,6 +373,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
       std::cout<<"This gem recHit did not matched with GEMGeometry."<<std::endl;
       continue;
     }
+    //Puts the points coordenades for a 3D plot 
     GlobalPoint recHitGP = GEMGeometry_->idToDet((*recHit).gemId())->surface().toGlobal(recHitLP);
     Float_t     rh_g_X = recHitGP.x();
     Float_t     rh_g_Y = recHitGP.y();
@@ -380,6 +387,7 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     gem_cls_tot->Fill(clusterSize);
     gem_bx_tot->Fill(bx);
     rh1_chamber->Fill(index);
+
     for(int i = firstClusterStrip; i < (firstClusterStrip + clusterSize); i++){
       gem_chamber_digi_recHit[index]->Fill(i,rh_roll);
     }
@@ -418,10 +426,10 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
       GEMDetId etaPartID = etaPart->id();
       GEMRecHitCollection::range range = gemRecHits->get(etaPartID);
       for (GEMRecHitCollection::const_iterator rechit = range.first; rechit!=range.second; ++rechit){
-          const GeomDet* geomDet(etaPart);
-          if ((*rechit).clusterSize()<minCLS) continue;
-          if ((*rechit).clusterSize()>maxCLS) continue;
-          testRecHits.push_back(MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit));        
+	const GeomDet* geomDet(etaPart);
+	if ((*rechit).clusterSize()<minCLS) continue;
+	if ((*rechit).clusterSize()>maxCLS) continue;
+	testRecHits.push_back(MuonTransientTrackingRecHit::specificBuild(geomDet,&*rechit));        
       }
     }
     MuonTransientTrackingRecHit::MuonRecHitContainer muRecHits;
@@ -456,6 +464,33 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     //std::vector<unsigned> Layers {, true, false};//temporal 
     MuonRecHitContainerLayered muRecHitsl(muRecHits,refChambers);
     trajectorySeeds =findSeeds(muRecHitsl);
+    
+    for (GEMRecHitCollection::const_iterator recHit = trajectorySeeds->begin(); recHit != trajectorySeeds->end(); ++recHit){
+      Float_t  rh_l_x = recHit->localPosition().x();
+      Int_t  bx = recHit->BunchX();
+      Int_t  clusterSize = recHit->clusterSize();
+      Int_t  firstClusterStrip = recHit->firstClusterStrip();
+      
+      GEMDetId id((*recHit).gemId());
+      int index = findIndex(id);
+      firedCh[index] = 1;
+      rMul[index] += 1;
+      //checkRH[index] = 1;
+      Short_t rh_roll = (Short_t) id.roll();
+      LocalPoint recHitLP = recHit->localPosition();
+      
+      if ( GEMGeometry_->idToDet((*recHit).gemId()) == nullptr) {
+	std::cout<<"This gem recHit did not matched with GEMGeometry."<<std::endl;
+	continue;
+      }
+      //Puts the points coordenades for a 3D plot 
+      GlobalPoint recHitGP = GEMGeometry_->idToDet((*recHit).gemId())->surface().toGlobal(recHitLP);
+      Float_t     rh_g_X = recHitGP.x();
+      Float_t     rh_g_Y = recHitGP.y();
+      Float_t     rh_g_Z = recHitGP.z();
+      NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+    }
+  
     /////////////////////////////////////////////////////////////////////////////////////
 
     Trajectory bestTrajectory;
