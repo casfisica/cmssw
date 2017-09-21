@@ -390,8 +390,17 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
     //CAS
     
     for (auto chambers : refChambers){
-      if( chambers == id.chamber() ){
-	NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+      if( chambers % 2 == 0  ){
+	int SchamberN = chambers - 1;
+	if (SchamberN == id.chamber()){
+	  if ( id.layer() == 2 ) {
+	    NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+	  }
+	}
+      }else{
+	if ( chambers == id.chamber()){
+	  NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+	}
       }
     }
 
