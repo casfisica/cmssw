@@ -51,7 +51,7 @@ process.XMLIdealGeometryESSource.geomXMLFiles.append('Geometry/MuonCommonData/da
 process.XMLIdealGeometryESSource.geomXMLFiles.append('Geometry/MuonCommonData/data/cosmic1/gem11L_c3_r5.xml')
 
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(20000))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(50000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(500))
 
 # Input source
 process.source = cms.Source("EmptySource")
@@ -159,6 +159,7 @@ process.GEMCosmicMuon = cms.EDProducer("GEMCosmicMuon",
                                            PropagatorOpposite = cms.string('SteppingHelixPropagatorAny'),
                                            RescalingFactor = cms.double(5.0)
                                            ),
+                                       refChambers=cms.vint32(11,20)
                                        )
 process.GEMCosmicMuon.ServiceParameters.GEMLayers = cms.untracked.bool(True)
 process.GEMCosmicMuon.ServiceParameters.CSCLayers = cms.untracked.bool(False)
@@ -196,7 +197,7 @@ process.gemcrValidation = cms.EDAnalyzer('gemcrValidation',
         ),
                                          #Reference Chambers
                                          #refChambers=cms.vint32( 1, 11, 21, 3, 13, 23, 5, 15, 25, 7, 17, 27, 9, 19, 29)
-                                         refChambers=cms.vint32( 1, 11, 21, 9, 19, 29)
+                                         refChambers=cms.vint32( 11, 20)
                                          )
 
 # Path and EndPath definitions
