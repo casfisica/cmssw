@@ -219,81 +219,78 @@ auto_ptr<std::vector<TrajectorySeed> > gemcrValidation::findSeeds(MuonRecHitCont
     //    cout<< "layer" <<hit1ID.layer() <<endl;
     //    cout<< "chamber" <<hit1ID.chamber() <<endl;
     bool flaghit1 = false;
-    
     for (auto chambers : muRecHits.Layers){
       if( chambers % 2 == 0  ){
 	int SchamberN = chambers - 1;
-	if (SchamberN == id.chamber()){
+	if (SchamberN == hit1ID.chamber()){
 	  if ( hit1ID.layer() == 1 ) {
 	    flaghit1 = true;
 	  }
 	}
       }else{
-	if ( chambers == id.chamber()){
+	if ( chambers == hit1ID.chamber()){
 	  if ( hit1ID.layer() == 2 ) {
 	    flaghit1 = true;
 	  }
 	}
       }
-    }
     
-    if(flaghit1){//Condition over hit1
-      
-      for (auto hit2 : muRecHits){
-	
-	GEMDetId hit2ID(hit2->rawId());
+
+      if(flaghit1){//Condition over hit1
 	bool flaghit2 = false;
-	for (auto chambers : muRecHits.Layers){	 
-	  if( chambers % 2 == 0  ){
-	    int SchamberN = chambers - 1;
-	    if (SchamberN == id.chamber()){
-	      if ( hit2ID.layer() == 1 ) {
-		flaghit2 = true;
+	for (auto hit2 : muRecHits){
+	  GEMDetId hit2ID(hit2->rawId());
+	  for (auto chambers : muRecHits.Layers){	 
+	    if( chambers % 2 == 0  ){
+	      int SchamberN = chambers - 1;
+	      if (SchamberN == hit2ID.chamber()){
+		if ( hit2ID.layer() == 1 ) {
+		  flaghit2 = true;
+		}
+	      }
+	    }else{
+	      if ( chambers == hit2ID.chamber()){
+		if ( hit2ID.layer() == 2 ) {
+		  flaghit2 = true;
+		}
 	      }
 	    }
-	  }else{
-	    if ( chambers == id.chamber()){
-	      if ( hit2ID.layer() == 2 ) {
-		flaghit2 = true;
+	    
+	    if (flaghit2){//Condition over the hit2
+	      // 	  cout<< "hit1ID_chamber" <<hit1ID.chamber() <<endl;
+	      // 	  cout<< "hit2ID_chamber" <<hit2ID.chamber() <<endl;
+	      ////////////////////////////////////////////////////////////
+	      
+	      if (hit1->globalPosition().y() < hit2->globalPosition().y()){/*y direction is up-down? (cosmic), see if hit1 is Higher than the hit2*/
+		LocalPoint segPos = hit1->localPosition();/*Define a LocalPoint with the position of hit1*/
+		GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/*Define a vector called segDirGV from hit2-hit1 */
+				      (hit2->globalPosition().y() - hit1->globalPosition().y()),
+				      hit2->globalPosition().z() - hit1->globalPosition().z());
+		//cout<< " hit1->localPosition().y()" << hit1->localPosition().y()<<endl;
+		//cout<< " hit1->globalPosition().y()" << hit1->globalPosition().y()<<endl;
+		segDirGV *=10;/*multiply per 10 ????*/
+		//segDirGV *=1;
+		LocalVector segDir = hit1->det()->toLocal(segDirGV);
+		
+		int charge= 1;
+		LocalTrajectoryParameters param(segPos, segDir, charge);
+		
+		AlgebraicSymMatrix mat(5,0);
+		mat = hit1->parametersError().similarityT( hit1->projectionMatrix() );
+		LocalTrajectoryError error(asSMatrix<5>(mat));
+		
+		TrajectoryStateOnSurface tsos(param, error, hit1->det()->surface(), &*theService->magneticField());
+		uint32_t id = hit1->rawId();
+		PTrajectoryStateOnDet const & seedTSOS = trajectoryStateTransform::persistentState(tsos, id);
+		
+		edm::OwnVector<TrackingRecHit> seedHits;
+		seedHits.push_back(hit1->hit()->clone());
+		seedHits.push_back(hit2->hit()->clone());
+		
+		TrajectorySeed seed(seedTSOS,seedHits,alongMomentum);
+		tmptrajectorySeeds->push_back(seed);
 	      }
 	    }
-	  }
-	}
-      }
-	
-	if (flaghit2){//Condition over the hit2
-// 	  cout<< "hit1ID_chamber" <<hit1ID.chamber() <<endl;
-// 	  cout<< "hit2ID_chamber" <<hit2ID.chamber() <<endl;
-	  ////////////////////////////////////////////////////////////
-	  
-	  if (hit1->globalPosition().y() < hit2->globalPosition().y()){/*y direction is up-down? (cosmic), see if hit1 is Higher than the hit2*/
-	    LocalPoint segPos = hit1->localPosition();/*Define a LocalPoint with the position of hit1*/
-	    GlobalVector segDirGV(hit2->globalPosition().x() - hit1->globalPosition().x(),/*Define a vector called segDirGV from hit2-hit1 */
-				  (hit2->globalPosition().y() - hit1->globalPosition().y()),
-				  hit2->globalPosition().z() - hit1->globalPosition().z());
-	    //cout<< " hit1->localPosition().y()" << hit1->localPosition().y()<<endl;
-	    //cout<< " hit1->globalPosition().y()" << hit1->globalPosition().y()<<endl;
-	    segDirGV *=10;/*multiply per 10 ????*/
-	    //segDirGV *=1;
-	    LocalVector segDir = hit1->det()->toLocal(segDirGV);
-	    
-	    int charge= 1;
-	    LocalTrajectoryParameters param(segPos, segDir, charge);
-	    
-	    AlgebraicSymMatrix mat(5,0);
-	    mat = hit1->parametersError().similarityT( hit1->projectionMatrix() );
-	    LocalTrajectoryError error(asSMatrix<5>(mat));
-	    
-	    TrajectoryStateOnSurface tsos(param, error, hit1->det()->surface(), &*theService->magneticField());
-	    uint32_t id = hit1->rawId();
-	    PTrajectoryStateOnDet const & seedTSOS = trajectoryStateTransform::persistentState(tsos, id);
-	    
-	    edm::OwnVector<TrackingRecHit> seedHits;
-	    seedHits.push_back(hit1->hit()->clone());
-	    seedHits.push_back(hit2->hit()->clone());
-	    
-	    TrajectorySeed seed(seedTSOS,seedHits,alongMomentum);
-	    tmptrajectorySeeds->push_back(seed);
 	  }
 	}
       }
@@ -418,13 +415,15 @@ void gemcrValidation::analyze(const edm::Event& e, const edm::EventSetup& iSetup
       if( chambers % 2 == 0  ){
 	int SchamberN = chambers - 1;
 	if (SchamberN == id.chamber()){
-	  if ( id.layer() == 2 ) {
+	  if ( id.layer() == 1 ) {
 	    NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
 	  }
 	}
       }else{
 	if ( chambers == id.chamber()){
-	  NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+	  if ( id.layer() == 2 ) {
+	    NumberOfSeeds->Fill(rh_g_X,rh_g_Z,rh_g_Y);
+	  }	
 	}
       }
     }
