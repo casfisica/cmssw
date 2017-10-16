@@ -51,7 +51,7 @@ process.XMLIdealGeometryESSource.geomXMLFiles.append('Geometry/MuonCommonData/da
 process.XMLIdealGeometryESSource.geomXMLFiles.append('Geometry/MuonCommonData/data/cosmic1/gem11L_c3_r5.xml')
 
 #process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(20000))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(5000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(50000))
 
 # Input source
 process.source = cms.Source("EmptySource")
