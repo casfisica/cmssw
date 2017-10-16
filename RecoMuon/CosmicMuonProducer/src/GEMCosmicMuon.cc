@@ -281,7 +281,7 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
 
 unique_ptr<std::vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonRecHitContainerLayered &muRecHits)
 {
-  unique_ptr<std::vector<TrajectorySeed> > trajectorySeeds( new vector<TrajectorySeed>());
+  unique_ptr<std::vector<TrajectorySeed> > tmptrajectorySeeds( new vector<TrajectorySeed>());
   for (auto hit1 : muRecHits){/* Range-based for loop, access by value, the type of hit1 is MuonTransientTrackingRecHit::MuonRecHitContaine&*/
     
     /////////////////////////////////////////////////////////////
@@ -369,7 +369,7 @@ unique_ptr<std::vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonRecHitCont
     }
   }
   
-  return trajectorySeeds;
+  return tmptrajectorySeeds;
 }
 Trajectory GEMCosmicMuon::makeTrajectory(TrajectorySeed seed, MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits, vector<const GEMChamber*> gemChambers)
 {
