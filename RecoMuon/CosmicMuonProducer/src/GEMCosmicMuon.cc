@@ -106,7 +106,7 @@ GEMCosmicMuon::GEMCosmicMuon(const edm::ParameterSet& ps) : iev(0) {
   theSmoother = new CosmicMuonSmoother(smootherPSet,theService);
   theUpdator = new KFUpdator();
   //CAS Add refChambers 
-  refChambers = cfg.getParameter<std::vector<int>>("refChambers");//Reference chambers
+  refChambers = ps.getParameter<std::vector<int>>("refChambers");//Reference chambers
   produces<reco::TrackCollection>();
   produces<TrackingRecHitCollection>();
   produces<reco::TrackExtraCollection>();
@@ -279,7 +279,7 @@ void GEMCosmicMuon::produce(edm::Event& ev, const edm::EventSetup& setup) {
   
 }
 
-unique_ptr<std::vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonTransientTrackingRecHit::MuonRecHitContainer &muRecHits)
+unique_ptr<std::vector<TrajectorySeed> > GEMCosmicMuon::findSeeds(MuonRecHitContainerLayered &muRecHits)
 {
   unique_ptr<std::vector<TrajectorySeed> > trajectorySeeds( new vector<TrajectorySeed>());
   for (auto hit1 : muRecHits){/* Range-based for loop, access by value, the type of hit1 is MuonTransientTrackingRecHit::MuonRecHitContaine&*/
